@@ -5,30 +5,17 @@ interface PlayerCardProps {
   selected?: boolean;
   onClick?: () => void;
   size?: "sm" | "md" | "lg";
-  showStats?: boolean;
 }
 
-function StatBar({ value, max = 10, color }: { value: number; max?: number; color: string }) {
-  return (
-    <div className="flex items-center gap-2">
-      <div className="flex-1 bg-gray-100 rounded-full h-2 overflow-hidden">
-        <div
-          className="h-full rounded-full transition-all duration-500"
-          style={{ width: `${(value / max) * 100}%`, backgroundColor: color }}
-        />
-      </div>
-      <span className="text-xs font-bold w-4 text-right" style={{ color }}>{value}</span>
-    </div>
-  );
-}
-
-export default function PlayerCard({ player, selected, onClick, size = "md", showStats = false }: PlayerCardProps) {
+export default function PlayerCard({ player, selected, onClick, size = "md" }: PlayerCardProps) {
   const sizeMap = {
-    sm: { card: "p-3", face: "text-4xl", name: "text-sm", emoji: "text-lg" },
-    md: { card: "p-4", face: "text-5xl", name: "text-base", emoji: "text-xl" },
-    lg: { card: "p-6", face: "text-7xl", name: "text-xl", emoji: "text-2xl" },
+    sm: { card: "p-3", name: "text-sm" },
+    md: { card: "p-4", name: "text-base" },
+    lg: { card: "p-6", name: "text-xl" },
   };
   const s = sizeMap[size];
+
+  const ratingColor = player.rating >= 8 ? "#22c55e" : player.rating >= 6 ? "#f59e0b" : "#ef4444";
 
   return (
     <div
@@ -50,39 +37,32 @@ export default function PlayerCard({ player, selected, onClick, size = "md", sho
         </div>
       )}
 
-      <div className="text-center mb-2">
-        <div className={`${s.emoji} mb-1`}>{player.emoji}</div>
-        <div className={`${s.face} float-anim`}>{player.face}</div>
+      <div className="text-center">
         <div
-          className={`font-black ${s.name} mt-2 leading-tight`}
+          className={`font-black ${s.name} leading-tight`}
           style={{ color: player.color }}
         >
           {player.name}
         </div>
-        <div className="text-xs text-gray-500 font-semibold mt-0.5 bg-white/60 rounded-full px-2 py-0.5 inline-block">
+        <div className="text-xs text-gray-500 font-semibold mt-1 bg-white/60 rounded-full px-2 py-0.5 inline-block">
           {player.role}
         </div>
-      </div>
 
-      {showStats && (
-        <div className="mt-3 space-y-1.5">
-          <div>
-            <div className="text-xs text-gray-500 font-bold mb-0.5">Скорость</div>
-            <StatBar value={player.speed} color={player.color} />
-          </div>
-          <div>
-            <div className="text-xs text-gray-500 font-bold mb-0.5">Реакция</div>
-            <StatBar value={player.reaction} color={player.color} />
-          </div>
-          <div>
-            <div className="text-xs text-gray-500 font-bold mb-0.5">Сила</div>
-            <StatBar value={player.power} color={player.color} />
-          </div>
-          <div className="mt-2 text-xs bg-white/70 rounded-2xl px-3 py-2 text-gray-600 font-semibold text-center">
-            ✨ {player.trait}
+        <div className="mt-3 bg-white/70 rounded-2xl px-3 py-2">
+          <div className="text-xs text-gray-400 font-bold mb-1">Оценка игрока</div>
+          <div className="flex items-center justify-center gap-2">
+            <div className="flex-1 bg-gray-100 rounded-full h-2 overflow-hidden">
+              <div
+                className="h-full rounded-full transition-all duration-500"
+                style={{ width: `${(player.rating / 10) * 100}%`, backgroundColor: ratingColor }}
+              />
+            </div>
+            <span className="font-black text-base" style={{ color: ratingColor }}>
+              {player.rating}/10
+            </span>
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }

@@ -11,6 +11,7 @@ export interface Player {
   role: string;
   description: string;
   trait: string;
+  rating: number;
 }
 
 export const ALL_PLAYERS: Player[] = [
@@ -27,6 +28,7 @@ export const ALL_PLAYERS: Player[] = [
     role: "ЦБ",
     description: "Центральный блокирующий — стена у сетки!",
     trait: "Железный блок",
+    rating: 7,
   },
   {
     id: 2,
@@ -41,6 +43,7 @@ export const ALL_PLAYERS: Player[] = [
     role: "ЦБ",
     description: "Мощный блок и убойная атака с линии.",
     trait: "Двойной блок",
+    rating: 7,
   },
   {
     id: 3,
@@ -55,6 +58,7 @@ export const ALL_PLAYERS: Player[] = [
     role: "Связ",
     description: "Мозг команды. Точная передача в любую точку.",
     trait: "Идеальный пас",
+    rating: 8,
   },
   {
     id: 4,
@@ -69,6 +73,7 @@ export const ALL_PLAYERS: Player[] = [
     role: "Диаг",
     description: "Диагональный нападающий — бьёт с любой позиции!",
     trait: "Гиперскорость",
+    rating: 5,
   },
   {
     id: 5,
@@ -83,6 +88,7 @@ export const ALL_PLAYERS: Player[] = [
     role: "Доигр",
     description: "Доигровщик — надёжный в атаке и приёме.",
     trait: "Универсальный",
+    rating: 6,
   },
   {
     id: 6,
@@ -97,6 +103,7 @@ export const ALL_PLAYERS: Player[] = [
     role: "Доигр",
     description: "Взрывной доигровщик — мощная атака с краёв.",
     trait: "Огненный удар",
+    rating: 3,
   },
 ];
 

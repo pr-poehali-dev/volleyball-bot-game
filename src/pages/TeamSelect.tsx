@@ -164,7 +164,6 @@ export default function TeamSelect({ onBack, onStartGame }: TeamSelectProps) {
                       selected={isSelected}
                       onClick={() => toggle(player.id)}
                       size="md"
-                      showStats
                     />
                   </div>
                 </div>
@@ -193,7 +192,6 @@ export default function TeamSelect({ onBack, onStartGame }: TeamSelectProps) {
                       selected={isSelected}
                       onClick={() => toggle(player.id)}
                       size="md"
-                      showStats
                     />
                   </div>
                 </div>
