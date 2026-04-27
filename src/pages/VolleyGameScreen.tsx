@@ -7,14 +7,7 @@ interface VolleyGameScreenProps {
   onEndGame: (result: { myScore: number; enemyScore: number; team: Player[] }) => void;
 }
 
-type Phase =
-  | "serve-anim"   // анимация подачи
-  | "waiting"      // мяч на чужой половине — ждём свайп
-  | "ball-flying"  // мяч летит
-  | "ai-turn"      // ИИ обрабатывает
-  | "scored"       // очко
-  | "gameover";
-
+type Phase = "serve-anim" | "waiting" | "ai-turn" | "gameover";
 type Side = "player" | "ai";
 
 const ENEMY_PLAYERS = [
@@ -23,17 +16,21 @@ const ENEMY_PLAYERS = [
   { color: "#2C3E50", face: "🤖", name: "Робот" },
 ];
 
+// Начальные позиции игроков (в % от поля)
+const INITIAL_POSITIONS = [
+  { x: 20, y: 25 },
+  { x: 20, y: 50 },
+  { x: 20, y: 75 },
+];
+
 const WIN_SCORE = 7;
 const TIME_LIMIT = 60;
-
-const AI_SPEED = 900; // ms задержки ИИ
 
 export default function VolleyGameScreen({ team, onEndGame }: VolleyGameScreenProps) {
   const [myScore, setMyScore] = useState(0);
   const [enemyScore, setEnemyScore] = useState(0);
   const [timeLeft, setTimeLeft] = useState(TIME_LIMIT);
   const [phase, setPhase] = useState<Phase>("serve-anim");
-  const [serveSide, setServeSide] = useState<Side>("player");
   const [touches, setTouches] = useState(0);
   const [ballX, setBallX] = useState(50);
   const [ballY, setBallY] = useState(50);
@@ -41,43 +38,36 @@ export default function VolleyGameScreen({ team, onEndGame }: VolleyGameScreenPr
   const [msg, setMsg] = useState<{ text: string; color: string } | null>(null);
   const [serveAnim, setServeAnim] = useState(false);
   const [activePIdx, setActivePIdx] = useState<number | null>(null);
-  const [swipeZoneActive, setSwipeZoneActive] = useState(false);
 
-  const touchStartX = useRef(0);
-  const touchStartY = useRef(0);
+  // Позиции игроков (перетаскивание)
+  const [playerPos, setPlayerPos] = useState(INITIAL_POSITIONS.map((p) => ({ ...p })));
+  const draggingRef = useRef<{ idx: number; offsetX: number; offsetY: number } | null>(null);
+  const fieldRef = useRef<HTMLDivElement>(null);
+
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const aiTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const showMsg = useCallback((text: string, color: string, duration = 1800) => {
+  const showMsg = useCallback((text: string, color: string, duration = 1600) => {
     setMsg({ text, color });
     setTimeout(() => setMsg(null), duration);
   }, []);
 
-  const pickActivePIdx = useCallback(() => {
-    return Math.floor(Math.random() * team.length);
-  }, [team]);
-
   const startServeAnim = useCallback((side: Side) => {
     setPhase("serve-anim");
     setServeAnim(true);
-    setBallX(side === "player" ? 20 : 80);
-    setBallY(70);
-    showMsg(side === "player" ? "Ваша подача! 🏐" : "Подача противника 😈", side === "player" ? "#3b82f6" : "#ef4444", 1200);
+    setBallX(side === "player" ? 18 : 82);
+    setBallY(50);
+    showMsg(side === "player" ? "Ваша подача! 🏐" : "Подача противника 😈", side === "player" ? "#3b82f6" : "#ef4444", 1000);
 
     setTimeout(() => {
       setServeAnim(false);
-      const targetX = side === "player" ? 75 : 25;
-      const targetY = 35 + Math.random() * 30;
+      const targetX = side === "player" ? 72 : 28;
+      const targetY = 30 + Math.random() * 40;
       setBallX(targetX);
       setBallY(targetY);
       setBallSide(side === "player" ? "ai" : "player");
       setTouches(0);
-
-      if (side === "player") {
-        setPhase("ai-turn");
-      } else {
-        setPhase("waiting");
-      }
+      setPhase(side === "player" ? "ai-turn" : "waiting");
     }, 900);
   }, [showMsg]);
 
@@ -97,7 +87,7 @@ export default function VolleyGameScreen({ team, onEndGame }: VolleyGameScreenPr
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [phase === "gameover"]);
 
-  // Проверка на победу по очкам
+  // Победа по очкам
   useEffect(() => {
     if (myScore >= WIN_SCORE || enemyScore >= WIN_SCORE) {
       setPhase("gameover");
@@ -105,116 +95,141 @@ export default function VolleyGameScreen({ team, onEndGame }: VolleyGameScreenPr
     }
   }, [myScore, enemyScore]);
 
-  // Старт игры
-  useEffect(() => {
-    startServeAnim("player");
-  }, []);
+  // Старт
+  useEffect(() => { startServeAnim("player"); }, []);
 
-  // Логика ИИ
+  // ИИ логика
   useEffect(() => {
     if (phase !== "ai-turn") return;
-
     aiTimerRef.current = setTimeout(() => {
       const rnd = Math.random();
-      const pwr = ENEMY_PLAYERS[0]; // "сила" ИИ
-
-      // ИИ иногда ошибается (30%)
       if (rnd < 0.30) {
         showMsg("📵 Ошибка противника! +1 вам", "#22c55e");
         setMyScore((s) => s + 1);
-        setServeSide("player");
-        setPhase("serve-anim");
         setTimeout(() => startServeAnim("player"), 1200);
         return;
       }
-
-      // ИИ отбивает — перекидывает на нашу сторону
-      const newX = 15 + Math.random() * 30;
-      const newY = 30 + Math.random() * 40;
-
-      setActivePIdx(0);
+      setActivePIdx(Math.floor(Math.random() * ENEMY_PLAYERS.length));
       setTimeout(() => setActivePIdx(null), 400);
-
-      setBallX(newX);
-      setBallY(newY);
+      setBallX(18 + Math.random() * 28);
+      setBallY(25 + Math.random() * 50);
       setBallSide("player");
       setTouches(0);
       setPhase("waiting");
-      showMsg("Мяч на вашей стороне!", "#8b5cf6", 1000);
-    }, AI_SPEED + Math.random() * 400);
-
+      showMsg("Мяч на вашей стороне!", "#8b5cf6", 900);
+    }, 800 + Math.random() * 500);
     return () => { if (aiTimerRef.current) clearTimeout(aiTimerRef.current); };
   }, [phase, showMsg, startServeAnim]);
 
-  // Обработка нажатия зоны (клик для десктопа)
-  const handleZoneClick = useCallback((e: React.MouseEvent) => {
-    if (phase !== "waiting") return;
+  // --- Перетаскивание игроков ---
+  const getFieldCoords = useCallback((clientX: number, clientY: number) => {
+    const rect = fieldRef.current?.getBoundingClientRect();
+    if (!rect) return null;
+    const x = Math.max(2, Math.min(48, ((clientX - rect.left) / rect.width) * 100));
+    const y = Math.max(5, Math.min(95, ((clientY - rect.top) / rect.height) * 100));
+    return { x, y };
+  }, []);
 
+  const handlePlayerMouseDown = (e: React.MouseEvent, idx: number) => {
+    e.preventDefault();
+    const rect = fieldRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const px = (playerPos[idx].x / 100) * rect.width + rect.left;
+    const py = (playerPos[idx].y / 100) * rect.height + rect.top;
+    draggingRef.current = { idx, offsetX: e.clientX - px, offsetY: e.clientY - py };
+  };
+
+  const handlePlayerTouchStart = (e: React.TouchEvent, idx: number) => {
+    const rect = fieldRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const touch = e.touches[0];
+    const px = (playerPos[idx].x / 100) * rect.width + rect.left;
+    const py = (playerPos[idx].y / 100) * rect.height + rect.top;
+    draggingRef.current = { idx, offsetX: touch.clientX - px, offsetY: touch.clientY - py };
+  };
+
+  const handleFieldMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!draggingRef.current) return;
+    const coords = getFieldCoords(e.clientX - draggingRef.current.offsetX, e.clientY - draggingRef.current.offsetY);
+    if (!coords) return;
+    const idx = draggingRef.current.idx;
+    setPlayerPos((prev) => prev.map((p, i) => i === idx ? coords : p));
+  }, [getFieldCoords]);
+
+  const handleFieldTouchMove = useCallback((e: React.TouchEvent) => {
+    if (!draggingRef.current) return;
+    e.preventDefault();
+    const touch = e.touches[0];
+    const coords = getFieldCoords(touch.clientX - draggingRef.current.offsetX, touch.clientY - draggingRef.current.offsetY);
+    if (!coords) return;
+    const idx = draggingRef.current.idx;
+    setPlayerPos((prev) => prev.map((p, i) => i === idx ? coords : p));
+  }, [getFieldCoords]);
+
+  const stopDrag = useCallback(() => {
+    draggingRef.current = null;
+  }, []);
+
+  // Удар по мячу — свайп/клик поля (только своя половина)
+  const fieldTouchStartRef = useRef({ x: 0, y: 0 });
+
+  const handleFieldTouchStartGame = (e: React.TouchEvent) => {
+    // Если начали с игрока — пропускаем
+    if (draggingRef.current) return;
+    fieldTouchStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+  };
+
+  const handleFieldTouchEndGame = useCallback((e: React.TouchEvent) => {
+    if (draggingRef.current) { draggingRef.current = null; return; }
+    if (phase !== "waiting") return;
+    const dx = e.changedTouches[0].clientX - fieldTouchStartRef.current.x;
+    processHit(dx);
+  }, [phase, touches]);
+
+  const handleFieldClick = useCallback((e: React.MouseEvent) => {
+    if (draggingRef.current) return;
+    if (phase !== "waiting") return;
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    const dx = e.clientX - rect.left - rect.width / 2;
-    processHit(dx, 0);
+    const dx = e.clientX - rect.left - rect.width * 0.25; // клик правее центра левой половины
+    processHit(dx);
   }, [phase, touches]);
 
-  // Свайп обработка
-  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+  const processHit = useCallback((dx: number) => {
     if (phase !== "waiting") return;
-    touchStartX.current = e.touches[0].clientX;
-    touchStartY.current = e.touches[0].clientY;
-    setSwipeZoneActive(true);
-  }, [phase]);
-
-  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
-    if (phase !== "waiting") return;
-    setSwipeZoneActive(false);
-    const dx = e.changedTouches[0].clientX - touchStartX.current;
-    const dy = e.changedTouches[0].clientY - touchStartY.current;
-    processHit(dx, dy);
-  }, [phase, touches]);
-
-  const processHit = useCallback((dx: number, dy: number) => {
-    if (phase !== "waiting") return;
-
     const newTouches = touches + 1;
-    const pIdx = pickActivePIdx();
+    const pIdx = Math.floor(Math.random() * team.length);
     setActivePIdx(pIdx);
     setTimeout(() => setActivePIdx(null), 500);
 
-    // Если свайп не в сторону противника (влево = плохо, вправо = хорошо)
-    const isGoodSwipe = dx > 20 || (Math.abs(dx) < 20); // клик тоже считается
+    const isAttack = dx > 15 || Math.abs(dx) <= 15;
 
-    if (newTouches >= 3 && !isGoodSwipe) {
-      // 3 касания — потеря мяча
+    if (newTouches >= 3 && !isAttack) {
       showMsg("🚫 3 касания! Очко противнику", "#ef4444");
       setEnemyScore((s) => s + 1);
-      setServeSide("ai");
-      setPhase("serve-anim");
-      setTimeout(() => startServeAnim("ai"), 1200);
       setTouches(0);
+      setTimeout(() => startServeAnim("ai"), 1200);
       return;
     }
 
-    if (isGoodSwipe) {
-      // Хорошая атака — перекидываем на ИИ
+    if (isAttack) {
       const power = Math.min(Math.abs(dx) / 80, 1);
-      const newX = 60 + power * 25;
-      const newY = 25 + Math.random() * 50;
-
-      setBallX(newX);
-      setBallY(newY);
+      setBallX(58 + power * 28);
+      setBallY(20 + Math.random() * 60);
       setBallSide("ai");
       setTouches(0);
 
-      if (newTouches === 1) showMsg(`${team[pIdx].name}: пас! 🏐`, "#3b82f6", 900);
-      else if (newTouches === 2) showMsg(`${team[pIdx].name}: атака! 💥`, "#f59e0b", 900);
-      else showMsg(`${team[pIdx].name}: удар! ⚡`, "#22c55e", 900);
-
-      setTimeout(() => setPhase("ai-turn"), 600);
+      const msgs = [
+        `${team[pIdx].name}: пас! 🏐`,
+        `${team[pIdx].name}: атака! 💥`,
+        `${team[pIdx].name}: удар! ⚡`,
+      ];
+      showMsg(msgs[Math.min(newTouches - 1, 2)], ["#3b82f6", "#f59e0b", "#22c55e"][Math.min(newTouches - 1, 2)], 900);
+      setTimeout(() => setPhase("ai-turn"), 550);
     } else {
-      // Плохой свайп (влево) — передача внутри
       setTouches(newTouches);
       showMsg(`Касание ${newTouches}/3`, "#8b5cf6", 700);
     }
-  }, [phase, touches, team, pickActivePIdx, showMsg, startServeAnim]);
+  }, [phase, touches, team, showMsg, startServeAnim]);
 
   const minutes = Math.floor(timeLeft / 60);
   const seconds = timeLeft % 60;
@@ -223,15 +238,11 @@ export default function VolleyGameScreen({ team, onEndGame }: VolleyGameScreenPr
   return (
     <div className="min-h-screen flex flex-col bg-[#0a1628] select-none">
       {/* Scoreboard */}
-      <div className="bg-gray-900 text-white px-4 py-2 flex items-center justify-between">
+      <div className="bg-[#0d1e3a] text-white px-4 py-2 flex items-center justify-between border-b border-white/10">
         <div className="flex items-center gap-2">
           <div className="flex -space-x-2">
             {team.map((p) => (
-              <div
-                key={p.id}
-                className="w-8 h-8 rounded-full border-2 border-gray-900 flex items-center justify-center text-sm"
-                style={{ backgroundColor: p.color }}
-              >
+              <div key={p.id} className="w-8 h-8 rounded-full border-2 border-[#0d1e3a] flex items-center justify-center text-sm" style={{ backgroundColor: p.color }}>
                 {p.face}
               </div>
             ))}
@@ -243,18 +254,14 @@ export default function VolleyGameScreen({ team, onEndGame }: VolleyGameScreenPr
           <div className="bg-yellow-400 text-gray-900 rounded-xl px-3 py-1 font-black text-lg">
             {minutes}:{String(seconds).padStart(2, "0")}
           </div>
-          <div className="text-xs text-gray-500 mt-0.5">до {WIN_SCORE} очков</div>
+          <div className="text-xs text-white/40 mt-0.5">до {WIN_SCORE} очков</div>
         </div>
 
         <div className="flex items-center gap-2">
           <span className="font-black text-3xl text-red-400">{enemyScore}</span>
           <div className="flex -space-x-2">
             {ENEMY_PLAYERS.map((p, i) => (
-              <div
-                key={i}
-                className="w-8 h-8 rounded-full border-2 border-gray-900 flex items-center justify-center text-sm"
-                style={{ backgroundColor: p.color }}
-              >
+              <div key={i} className="w-8 h-8 rounded-full border-2 border-[#0d1e3a] flex items-center justify-center text-sm" style={{ backgroundColor: p.color }}>
                 {p.face}
               </div>
             ))}
@@ -263,54 +270,61 @@ export default function VolleyGameScreen({ team, onEndGame }: VolleyGameScreenPr
       </div>
 
       {/* ПОЛЕ */}
-      <div className="flex-1 relative overflow-hidden" style={{ background: "linear-gradient(180deg, #1a3a5c 0%, #0f2744 100%)" }}>
+      <div
+        ref={fieldRef}
+        className="flex-1 relative overflow-hidden cursor-pointer"
+        style={{ background: "linear-gradient(180deg, #1a3a5c 0%, #0f2744 100%)", touchAction: "none" }}
+        onMouseMove={handleFieldMouseMove}
+        onMouseUp={stopDrag}
+        onMouseLeave={stopDrag}
+        onTouchMove={handleFieldTouchMove}
+        onTouchEnd={(e) => { stopDrag(); handleFieldTouchEndGame(e); }}
+        onTouchStart={handleFieldTouchStartGame}
+        onClick={handleFieldClick}
+      >
+        {/* Сетка — белая полоса */}
+        <div className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 z-10 flex flex-col" style={{ width: 16 }}>
+          <div className="flex-1" style={{
+            backgroundImage: "repeating-linear-gradient(180deg, rgba(255,255,255,0.7) 0px, rgba(255,255,255,0.7) 8px, transparent 8px, transparent 18px)",
+          }} />
+        </div>
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-4 h-3 bg-yellow-400 z-20 rounded-b" />
 
-        {/* Сетка (белая полоса посередине) */}
-        <div className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 w-1 bg-white/80 z-10" />
-        <div
-          className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 z-10"
-          style={{
-            width: 18,
-            backgroundImage: "repeating-linear-gradient(180deg, rgba(255,255,255,0.6) 0px, rgba(255,255,255,0.6) 10px, transparent 10px, transparent 22px)",
-          }}
-        />
-        {/* Верхняя лента сетки */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-5 h-3 bg-yellow-400 z-20 rounded-b" />
-
-        {/* Зона ИИ — правая половина */}
-        <div className="absolute top-0 bottom-0 right-0 w-[48%] flex flex-col justify-around items-center py-6 pr-2">
+        {/* ИИ игроки — правая сторона */}
+        <div className="absolute top-0 right-0 bottom-0 w-[48%] flex flex-col justify-around items-center py-6 pr-2">
           {ENEMY_PLAYERS.map((p, i) => (
-            <div
-              key={i}
-              className={`transition-all duration-300 ${activePIdx === i && ballSide === "ai" ? "scale-125" : ""}`}
-            >
+            <div key={i} className={`transition-all duration-300 ${activePIdx === i && ballSide === "ai" ? "scale-125" : ""}`}>
               <CharacterFace color={p.color} face={p.face} size={40} jersey={p.name.slice(0, 3)} />
             </div>
           ))}
         </div>
 
-        {/* Зона игрока — левая половина */}
-        <div className="absolute top-0 left-0 w-[48%] flex flex-col justify-around items-center py-6 pl-2">
-          {team.map((p, i) => (
-            <div
-              key={p.id}
-              className={`transition-all duration-300 ${activePIdx === i ? "scale-125" : ""}`}
-            >
-              <CharacterFace color={p.color} face={p.face} size={40} jersey={p.name.slice(0, 3)} />
-            </div>
-          ))}
-        </div>
+        {/* Мои игроки — перетаскиваемые */}
+        {team.map((p, i) => (
+          <div
+            key={p.id}
+            className="absolute z-20 cursor-grab active:cursor-grabbing transition-transform duration-100"
+            style={{
+              left: `${playerPos[i].x}%`,
+              top: `${playerPos[i].y}%`,
+              transform: `translate(-50%, -50%) ${activePIdx === i ? "scale(1.25)" : "scale(1)"}`,
+            }}
+            onMouseDown={(e) => { e.stopPropagation(); handlePlayerMouseDown(e, i); }}
+            onTouchStart={(e) => { e.stopPropagation(); handlePlayerTouchStart(e, i); }}
+          >
+            <CharacterFace color={p.color} face={p.face} size={40} jersey={p.name.slice(0, 3)} />
+          </div>
+        ))}
 
-        {/* МЯЧ */}
+        {/* Мяч */}
         <div
-          className="absolute z-30 pointer-events-none transition-all"
+          className="absolute z-30 pointer-events-none"
           style={{
             left: `${ballX}%`,
             top: `${ballY}%`,
             transform: "translate(-50%, -50%)",
-            transitionDuration: phase === "serve-anim" ? "800ms" : "500ms",
-            transitionTimingFunction: "cubic-bezier(0.25, 0.46, 0.45, 0.94)",
-            filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.5))",
+            transition: phase === "serve-anim" ? "all 800ms cubic-bezier(0.25,0.46,0.45,0.94)" : "all 500ms cubic-bezier(0.25,0.46,0.45,0.94)",
+            filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.6))",
           }}
         >
           <span className="text-3xl">{serveAnim ? "💨" : "🏐"}</span>
@@ -320,21 +334,47 @@ export default function VolleyGameScreen({ team, onEndGame }: VolleyGameScreenPr
         {msg && (
           <div
             className="absolute top-3 left-1/2 -translate-x-1/2 px-4 py-2 rounded-2xl font-black text-white text-sm whitespace-nowrap shadow-xl z-40"
-            style={{ backgroundColor: msg.color, animation: "slideIn 0.3s ease" }}
+            style={{ backgroundColor: msg.color, animation: "slideIn 0.25s ease" }}
           >
             {msg.text}
           </div>
         )}
 
-        {/* ФИНАЛЬНЫЙ ЭКРАН */}
+        {/* Подсказка свайп */}
+        {phase === "waiting" && (
+          <div className="absolute bottom-3 left-4 text-white/40 text-xs font-bold pointer-events-none">
+            👆 свайп → атака · тащи игроков
+          </div>
+        )}
+
+        {/* Индикатор касаний */}
+        {phase === "waiting" && (
+          <div className="absolute bottom-3 right-4 flex gap-1.5 pointer-events-none">
+            {[0, 1, 2].map((i) => (
+              <div
+                key={i}
+                className="w-2.5 h-2.5 rounded-full transition-all"
+                style={{ backgroundColor: i < touches ? "#f59e0b" : "rgba(255,255,255,0.2)" }}
+              />
+            ))}
+          </div>
+        )}
+
+        {phase === "ai-turn" && (
+          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 text-white/40 text-xs font-bold animate-pulse pointer-events-none">
+            ИИ думает... 🤖
+          </div>
+        )}
+
+        {/* ФИНАЛ */}
         {phase === "gameover" && (
           <div className="absolute inset-0 bg-black/70 flex items-center justify-center z-50">
-            <div className="bg-white rounded-3xl p-8 text-center mx-4 shadow-2xl" style={{ animation: "slideIn 0.4s ease" }}>
-              <div className="text-6xl mb-2">{isMyWin ? "🏆" : myScore === enemyScore ? "🤝" : "😢"}</div>
-              <div className="font-black text-3xl text-gray-800 mb-1">
+            <div className="bg-[#0d1e3a] border border-white/20 rounded-3xl p-8 text-center mx-4 shadow-2xl" style={{ animation: "slideIn 0.4s ease" }}>
+              <div className="text-6xl mb-3 float-anim">{isMyWin ? "🏆" : myScore === enemyScore ? "🤝" : "😢"}</div>
+              <div className="font-black text-3xl text-white mb-2">
                 {isMyWin ? "ПОБЕДА!" : myScore === enemyScore ? "НИЧЬЯ!" : "ПОРАЖЕНИЕ"}
               </div>
-              <div className="text-2xl font-black text-gray-600 mb-5">{myScore} : {enemyScore}</div>
+              <div className="text-3xl font-black text-white/70 mb-6">{myScore} : {enemyScore}</div>
               <button
                 onClick={() => onEndGame({ myScore, enemyScore, team })}
                 className="bg-green-500 text-white font-black text-lg px-8 py-3 rounded-2xl active:scale-95 transition-transform"
@@ -342,61 +382,6 @@ export default function VolleyGameScreen({ team, onEndGame }: VolleyGameScreenPr
                 Продолжить →
               </button>
             </div>
-          </div>
-        )}
-      </div>
-
-      {/* ЗОНА КАСАНИЯ */}
-      <div
-        className={`relative cursor-pointer transition-all duration-200 ${phase === "waiting" ? "opacity-100" : "opacity-50 pointer-events-none"}`}
-        style={{
-          minHeight: 130,
-          background: swipeZoneActive
-            ? "linear-gradient(180deg, #1e3a5f 0%, #2563eb22 100%)"
-            : phase === "waiting"
-            ? "linear-gradient(180deg, #1e3a5f 0%, #0f2744 100%)"
-            : "#111827",
-          borderTop: `2px solid ${phase === "waiting" ? "#3b82f6" : "#374151"}`,
-        }}
-        onClick={handleZoneClick}
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
-      >
-        {/* Индикатор касаний */}
-        <div className="flex justify-center gap-2 pt-3">
-          {[0, 1, 2].map((i) => (
-            <div
-              key={i}
-              className="w-3 h-3 rounded-full transition-all duration-200"
-              style={{
-                backgroundColor: i < touches ? "#f59e0b" : phase === "waiting" ? "#3b82f680" : "#374151",
-                transform: i < touches ? "scale(1.3)" : "scale(1)",
-              }}
-            />
-          ))}
-        </div>
-
-        <div className="flex flex-col items-center justify-center gap-1 py-3">
-          {phase === "waiting" ? (
-            <>
-              <div className="text-white font-black text-lg">
-                {ballSide === "player" ? "👆 Нажми или свайпни →" : "Мяч у противника..."}
-              </div>
-              <div className="text-gray-400 text-sm">свайп вправо = атака · касаний: {touches}/3</div>
-            </>
-          ) : phase === "ai-turn" ? (
-            <div className="text-gray-400 font-bold text-base animate-pulse">ИИ думает... 🤖</div>
-          ) : phase === "serve-anim" ? (
-            <div className="text-blue-400 font-bold text-base">🏐 Подача...</div>
-          ) : (
-            <div className="text-gray-600 font-bold text-base">— — —</div>
-          )}
-        </div>
-
-        {/* Стрелка направления */}
-        {phase === "waiting" && (
-          <div className="absolute right-6 top-1/2 -translate-y-1/2 text-blue-400 text-2xl animate-pulse">
-            →
           </div>
         )}
       </div>
