@@ -71,7 +71,7 @@ export default function MainMenu({ onPlay, onGallery, onProfile }: MainMenuProps
             className="w-full py-4 rounded-3xl font-black text-xl text-white btn-press bounce-hover backdrop-blur-sm border border-white/40 hover:bg-white/20 transition-all"
             style={{ background: "rgba(255,255,255,0.12)" }}
           >
-            🎮 Играть!
+            🎮 Гужбанить!
           </button>
 
           <div className="flex gap-3 w-full">
@@ -80,7 +80,7 @@ export default function MainMenu({ onPlay, onGallery, onProfile }: MainMenuProps
               className="flex-1 py-3 rounded-3xl font-black text-base text-white btn-press bounce-hover backdrop-blur-sm border border-white/40 hover:bg-white/20 transition-all"
               style={{ background: "rgba(255,255,255,0.12)" }}
             >
-              👥 Герои
+              👥 Игроки
             </button>
             <button
               onClick={onProfile}
