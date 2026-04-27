@@ -73,6 +73,11 @@ export default function MainMenu({ onPlay, onGallery, onProfile }: MainMenuProps
           </div>
         </div>
       </div>
+
+      {/* Footer */}
+      <div className="absolute bottom-4 z-10 text-white/40 text-xs">
+        powered by <a href="https://t.me/niedivan" target="_blank" rel="noreferrer" className="hover:text-white/70 transition-colors">@niedivan</a>
+      </div>
     </div>
   );
 }
