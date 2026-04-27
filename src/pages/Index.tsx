@@ -1,14 +1,82 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useState } from "react";
+import { Player } from "@/data/players";
+import MainMenu from "./MainMenu";
+import TeamSelect from "./TeamSelect";
+import GameScreen from "./GameScreen";
+import MatchResults from "./MatchResults";
+import Gallery from "./Gallery";
+import Profile from "./Profile";
 
-const Index = () => {
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4 color-black text-black">Добро пожаловать!</h1>
-        <p className="text-xl text-gray-600">тут будет отображаться ваш проект</p>
-      </div>
-    </div>
-  );
-};
+type Screen = "menu" | "team-select" | "game" | "results" | "gallery" | "profile";
 
-export default Index;
+interface GameResult {
+  myScore: number;
+  enemyScore: number;
+  team: Player[];
+}
+
+export default function Index() {
+  const [screen, setScreen] = useState<Screen>("menu");
+  const [team, setTeam] = useState<Player[]>([]);
+  const [result, setResult] = useState<GameResult | null>(null);
+
+  const handleStartGame = (selectedTeam: Player[]) => {
+    setTeam(selectedTeam);
+    setScreen("game");
+  };
+
+  const handleEndGame = (res: GameResult) => {
+    setResult(res);
+    setScreen("results");
+  };
+
+  if (screen === "menu") {
+    return (
+      <MainMenu
+        onPlay={() => setScreen("team-select")}
+        onGallery={() => setScreen("gallery")}
+        onProfile={() => setScreen("profile")}
+      />
+    );
+  }
+
+  if (screen === "team-select") {
+    return (
+      <TeamSelect
+        onBack={() => setScreen("menu")}
+        onStartGame={handleStartGame}
+      />
+    );
+  }
+
+  if (screen === "game" && team.length > 0) {
+    return (
+      <GameScreen
+        team={team}
+        onEndGame={handleEndGame}
+      />
+    );
+  }
+
+  if (screen === "results" && result) {
+    return (
+      <MatchResults
+        myScore={result.myScore}
+        enemyScore={result.enemyScore}
+        team={result.team}
+        onPlayAgain={() => setScreen("team-select")}
+        onMainMenu={() => setScreen("menu")}
+      />
+    );
+  }
+
+  if (screen === "gallery") {
+    return <Gallery onBack={() => setScreen("menu")} />;
+  }
+
+  if (screen === "profile") {
+    return <Profile onBack={() => setScreen("menu")} />;
+  }
+
+  return null;
+}
