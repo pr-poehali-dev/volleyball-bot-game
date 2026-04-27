@@ -118,7 +118,7 @@ export default function Gallery({ onBack }: GalleryProps) {
             ←
           </button>
           <div>
-            <h1 className="font-black text-xl text-gray-800">Галерея героев</h1>
+            <h1 className="font-black text-xl text-gray-800">ПОКОЛЕНИЕ ЧУДЕС</h1>
             <p className="text-xs text-gray-500 font-semibold">{ALL_PLAYERS.length} персонажей</p>
           </div>
         </div>
