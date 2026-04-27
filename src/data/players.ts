@@ -84,6 +84,20 @@ export const ALL_PLAYERS: Player[] = [
     description: "Доигровщик — надёжный в атаке и приёме.",
     trait: "Универсальный",
   },
+  {
+    id: 6,
+    name: "ИЛЬНУР",
+    emoji: "🔥",
+    face: "😤",
+    color: "#FD79A8",
+    bgColor: "#FFE5F0",
+    speed: 9,
+    reaction: 7,
+    power: 8,
+    role: "Доигр",
+    description: "Взрывной доигровщик — мощная атака с краёв.",
+    trait: "Огненный удар",
+  },
 ];
 
 export const ACHIEVEMENTS = [
