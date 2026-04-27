@@ -178,19 +178,19 @@
   }
 
   .bg-pan {
-    animation: bgPan 14s ease-in-out infinite;
-    background-size: 130% 130%;
+    animation: bgPan 28s ease-in-out infinite;
+    scale: 1.15;
   }
 
   @keyframes bgPan {
     0% {
-      background-position: 20% 50%;
+      transform: scale(1.15) translateX(-8%);
     }
     50% {
-      background-position: 80% 50%;
+      transform: scale(1.15) translateX(8%);
     }
     100% {
-      background-position: 20% 50%;
+      transform: scale(1.15) translateX(-8%);
     }
   }
 }
