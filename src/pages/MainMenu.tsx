@@ -60,7 +60,7 @@ export default function MainMenu({ onPlay, onGallery, onProfile }: MainMenuProps
             3×3
           </h2>
           <p className="text-white/80 font-bold text-sm mt-3 bg-white/10 rounded-full px-4 py-1.5 backdrop-blur border border-white/20">
-            🏐 Собери команду и побеждай!
+            🏐 Собери команду из команды ПОКОЛЕНИЕ ЧУДЕС
           </p>
         </div>
 
@@ -68,11 +68,8 @@ export default function MainMenu({ onPlay, onGallery, onProfile }: MainMenuProps
         <div className="flex flex-col items-center gap-3 w-full">
           <button
             onClick={onPlay}
-            className="w-full py-4 rounded-3xl font-black text-xl text-white btn-press bounce-hover"
-            style={{
-              background: "linear-gradient(135deg, #FF6B6B, #FF8E53)",
-              boxShadow: "0 8px 0 #c0392b",
-            }}
+            className="w-full py-4 rounded-3xl font-black text-xl text-white btn-press bounce-hover backdrop-blur-sm border border-white/40 hover:bg-white/20 transition-all"
+            style={{ background: "rgba(255,255,255,0.12)" }}
           >
             🎮 Играть!
           </button>
@@ -80,21 +77,15 @@ export default function MainMenu({ onPlay, onGallery, onProfile }: MainMenuProps
           <div className="flex gap-3 w-full">
             <button
               onClick={onGallery}
-              className="flex-1 py-3 rounded-3xl font-black text-base text-white btn-press bounce-hover"
-              style={{
-                background: "linear-gradient(135deg, #A29BFE, #6C5CE7)",
-                boxShadow: "0 6px 0 #4834d4",
-              }}
+              className="flex-1 py-3 rounded-3xl font-black text-base text-white btn-press bounce-hover backdrop-blur-sm border border-white/40 hover:bg-white/20 transition-all"
+              style={{ background: "rgba(255,255,255,0.12)" }}
             >
               👥 Герои
             </button>
             <button
               onClick={onProfile}
-              className="flex-1 py-3 rounded-3xl font-black text-base text-white btn-press bounce-hover"
-              style={{
-                background: "linear-gradient(135deg, #FFB627, #FD9644)",
-                boxShadow: "0 6px 0 #e67e22",
-              }}
+              className="flex-1 py-3 rounded-3xl font-black text-base text-white btn-press bounce-hover backdrop-blur-sm border border-white/40 hover:bg-white/20 transition-all"
+              style={{ background: "rgba(255,255,255,0.12)" }}
             >
               🏅 Профиль
             </button>
