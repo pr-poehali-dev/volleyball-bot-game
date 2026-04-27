@@ -9,7 +9,7 @@ export default function MainMenu({ onPlay, onGallery, onProfile }: MainMenuProps
     <div className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden">
       {/* Background image */}
       <div
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        className="absolute inset-0 bg-no-repeat bg-pan"
         style={{ backgroundImage: "url('https://cdn.poehali.dev/files/11191d08-d3a1-40ba-a82f-22fe7cc28f99.jpg')" }}
       />
       {/* Dark overlay */}
