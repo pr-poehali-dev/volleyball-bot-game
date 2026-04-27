@@ -3,6 +3,7 @@ import { Player } from "@/data/players";
 import MainMenu from "./MainMenu";
 import TeamSelect from "./TeamSelect";
 import GameScreen from "./GameScreen";
+import VolleyGameScreen from "./VolleyGameScreen";
 import MatchResults from "./MatchResults";
 import Gallery from "./Gallery";
 import Profile from "./Profile";
@@ -51,7 +52,7 @@ export default function Index() {
 
   if (screen === "game" && team.length > 0) {
     return (
-      <GameScreen
+      <VolleyGameScreen
         team={team}
         onEndGame={handleEndGame}
       />
